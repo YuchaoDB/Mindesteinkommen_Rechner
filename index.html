@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindesteinkommen Rechner - Finanzplaner</title>
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #4c51bf;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .card-icon.expenses { background: #fef3c7; }
+        .card-icon.income { background: #dbeafe; }
+        .card-icon.forecast { background: #d1fae5; }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+
+        .expense-list {
+            margin-top: 20px;
+        }
+
+        .expense-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .expense-item.fixed { border-left-color: var(--primary); }
+        .expense-item.variable { border-left-color: var(--warning); }
+
+        .expense-info {
+            flex: 1;
+        }
+
+        .expense-name {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .expense-category {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .expense-amount {
+            font-weight: 700;
+            font-size: 1.125rem;
+            color: var(--primary);
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card.primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+            color: white;
+        }
+
+        .stat-card.info {
+            background: linear-gradient(135deg, var(--info) 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid var(--warning);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .result-box.success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border-color: var(--success);
+        }
+
+        .result-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .formula {
+            background: var(--bg);
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.875rem;
+            margin: 16px 0;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .slider-group {
+            margin-bottom: 20px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .chart-container {
+            margin-top: 20px;
+            height: 300px;
+            position: relative;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 24px 0 16px;
+            color: var(--text);
+        }
+
+        .disclaimer {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.875rem;
+            color: #92400e;
+            margin-top: 16px;
+        }
+
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 12px; }
+            .card { padding: 16px; }
+            header h1 { font-size: 1.5rem; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .result-value { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💰 Mindesteinkommen Rechner</h1>
+            <p>Dein persönlicher finanzieller Sicherheitsrechner</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('expenses')">📋 Pflichtausgaben</button>
+            <button class="tab-btn" onclick="switchTab('income')">💵 Einkommen</button>
+            <button class="tab-btn" onclick="switchTab('forecast')">📈 Prognose</button>
+        </div>
+
+        <!-- TAB 1: Pflichtausgaben -->
+        <div id="expenses-tab" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon expenses">📋</div>
+                    <div>
+                        <div class="card-title">Pflichtausgaben</div>
+                        <div class="card-subtitle">Monatliche Fix- und Variable Kosten</div>
+                    </div>
+                </div>
+
+                <!-- FESTAUSGABEN -->
+                <div class="section-title">🔒 Festkosten (Monatlich)</div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Kategorie</label>
+                        <select id="fixedCategory">
+                            <option value="rent">🏠 Miete</option>
+                            <option value="transport">🚗 Transport</option>
+                            <option value="insurance">📋 Versicherung</option>
+                            <option value="fitness">💪 Fitnessstudio</option>
+                            <option value="phone">📱 Telefon/Internet</option>
+                            <option value="other">📌 Sonstiges</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Betrag (€)</label>
+                        <input type="number" id="fixedAmount" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Häufigkeit</label>
+                        <select id="fixedFrequency">
+                            <option value="monthly">Monatlich</option>
+                            <option value="yearly">Jährlich</option>
+                            <option value="weekly">Wöchentlich</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addFixedExpense()" style="margin-bottom: 20px;">+ Festkosten hinzufügen</button>
+
+                <div id="fixedExpensesList" class="expense-list"></div>
+
+                <!-- VARIABLE KOSTEN -->
+                <div class="section-title">📊 Variable Kosten (Monatlich)</div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Kategorie</label>
+                        <select id="variableCategory">
+                            <option value="food">🍔 Lebensmittel</option>
+                            <option value="utilities">⚡ Nebenkosten</option>
+                            <option value="health">💊 Gesundheit</option>
+                            <option value="clothing">👕 Kleidung</option>
+                            <option value="other">📌 Sonstiges</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Durchschnitt (€)</label>
+                        <input type="number" id="variableAmount" placeholder="0.00" step="0.01" min="0">
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="addVariableExpense()">+ Variable Kosten hinzufügen</button>
+
+                <div id="variableExpensesList" class="expense-list"></div>
+
+                <!-- ZUSAMMENFASSUNG -->
+                <div class="stats-grid" style="margin-top: 24px;">
+                    <div class="stat-card primary">
+                        <div class="stat-label">Festkosten</div>
+                        <div class="stat-value" id="fixedTotal">€0,00</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Variable Kosten</div>
+                        <div class="stat-value" id="variableTotal">€0,00</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-label">Gesamt</div>
+                        <div class="stat-value" id="mandatoryTotal">€0,00</div>
+                    </div>
+                </div>
+
+                <button class="btn btn-danger" onclick="clearAllExpenses()" style="margin-top: 16px;">🗑️ Alle löschen</button>
+            </div>
+        </div>
+
+        <!-- TAB 2: Einkommen -->
+        <div id="income-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon income">💵</div>
+                    <div>
+                        <div class="card-title">Mindesteinkommen Rechner</div>
+                        <div class="card-subtitle">Berechne dein sicheres Mindestnettoeinkommen</div>
+                    </div>
+                </div>
+
+                <div class="formula">
+                    📐 Formel: Einkommen = (Pflichtausgaben + Puffer) / (1 - Notfallquote - Investitionsquote)
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>📋 Pflichtausgaben (€)</label>
+                        <input type="number" id="mandatoryExpenses" placeholder="0.00" step="0.01" readonly>
+                    </div>
+                    <div class="input-group">
+                        <label>💰 Pufferbetrag (€)</label>
+                        <input type="number" id="bufferAmount" placeholder="z.B. 200" value="200" step="0.01" min="0">
+                    </div>
+                </div>
+
+                <!-- SLIDERS -->
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>🛡️ Notfallquote (Emergency Rate)</label>
+                        <span class="slider-value" id="emergencyRateValue">10%</span>
+                    </div>
+                    <input type="range" id="emergencyRate" min="5" max="30" value="10" step="1" oninput="updateIncomeCalculation()">
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>📈 Investitionsquote (Investment Rate)</label>
+                        <span class="slider-value" id="investmentRateValue">20%</span>
+                    </div>
+                    <input type="range" id="investmentRate" min="5" max="40" value="20" step="1" oninput="updateIncomeCalculation()">
+                </div>
+
+                <div class="result-box">
+                    <div class="result-label">Dein Mindest-Einkommen</div>
+                    <div class="result-value" id="requiredIncome">€0,00</div>
+                </div>
+
+                <!-- DETAILBREAKDOWN -->
+                <div class="stats-grid" style="margin-top: 20px;">
+                    <div class="stat-card info">
+                        <div class="stat-label">Pflichtausgaben</div>
+                        <div class="stat-value" id="incMandatory">€0</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-label">Notfall-Puffer</div>
+                        <div class="stat-value" id="incEmergency">€0</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-label">Investitionen</div>
+                        <div class="stat-value" id="incInvestment">€0</div>
+                    </div>
+                    <div class="stat-card primary">
+                        <div class="stat-label">Verbleibend</div>
+                        <div class="stat-value" id="incRemaining">€0</div>
+                    </div>
+                </div>
+
+                <div class="disclaimer">
+                    ⚠️ <strong>Hinweis:</strong> Dies ist eine Orientierungsrechnung. Die tatsächlichen Werte können je nach persönlicher Situation abweichen.
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: Prognose -->
+        <div id="forecast-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon forecast">📈</div>
+                    <div>
+                        <div class="card-title">Investitions-Prognose</div>
+                        <div class="card-subtitle">Wachstumssimulation mit Zinseszins</div>
+                    </div>
+                </div>
+
+                <div class="formula">
+                    📐 Monatlich: nächstes = aktuell × (1 + monatlich) + sparbeitrag
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>💵 Aktueller Betrag (€)</label>
+                        <input type="number" id="currentAmount" placeholder="z.B. 5000" value="0" step="100" min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>📅 Monatliche Sparrate (€)</label>
+                        <input type="number" id="monthlySavings" placeholder="z.B. 300" value="300" step="10" min="0">
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>📊 Erwartete Rendite (% p.a.)</label>
+                        <input type="number" id="annualReturn" placeholder="z.B. 7" value="7" step="0.1" min="0" max="30">
+                    </div>
+                    <div class="input-group">
+                        <label>🎯 Zielbetrag (€)</label>
+                        <input type="number" id="targetAmount" placeholder="z.B. 100000" value="100000" step="1000">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="calculateForecast()" style="margin-top: 16px;">📊 Prognose berechnen</button>
+
+                <div id="forecastResults" style="display: none;">
+                    <div class="result-box success">
+                        <div class="result-label">Zeit bis zum Ziel</div>
+                        <div class="result-value" id="monthsToTarget">0 Monate</div>
+                        <div class="result-label" id="targetDate" style="margin-top: 8px;"></div>
+                    </div>
+
+                    <div class="stats-grid" style="margin-top: 20px;">
+                        <div class="stat-card primary">
+                            <div class="stat-label">Benötigte Zeit</div>
+                            <div class="stat-value" id="forecastYears">0 Jahre</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-label">Gesamt-Einzahlungen</div>
+                            <div class="stat-value" id="totalContributions">€0</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-label">Zinserträge</div>
+                            <div class="stat-value" id="interestEarned">€0</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="disclaimer">
+                    ⚠️ <strong>Hinweis:</strong> Dies ist eine vereinfachte Berechnung ohne Berücksichtigung von Inflation, Steuern oder Kursschwankungen. Vergangene Performanz garantiert keine zukünftigen Ergebnisse.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ===== DATEN-MODELL =====
+        let fixedExpenses = JSON.parse(localStorage.getItem('fixedExpenses')) || [];
+        let variableExpenses = JSON.parse(localStorage.getItem('variableExpenses')) || [];
+
+        // ===== TAB NAVIGATION =====
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // ===== FESTAUSGABEN =====
+        function addFixedExpense() {
+            const category = document.getElementById('fixedCategory').value;
+            const amount = parseFloat(document.getElementById('fixedAmount').value);
+            const frequency = document.getElementById('fixedFrequency').value;
+
+            if (!amount || amount <= 0) {
+                alert('Bitte geben Sie einen gültigen Betrag ein');
+                return;
+            }
+
+            const categoryLabels = {
+                'rent': '🏠 Miete',
+                'transport': '🚗 Transport',
+                'insurance': '📋 Versicherung',
+                'fitness': '💪 Fitnessstudio',
+                'phone': '📱 Telefon/Internet',
+                'other': '📌 Sonstiges'
+            };
+
+            const expense = {
+                id: Date.now(),
+                category: category,
+                label: categoryLabels[category],
+                amount: amount,
+                frequency: frequency
+            };
+
+            fixedExpenses.push(expense);
+            saveExpenses();
+            renderExpenses();
+            
+            document.getElementById('fixedAmount').value = '';
+        }
+
+        function addVariableExpense() {
+            const category = document.getElementById('variableCategory').value;
+            const amount = parseFloat(document.getElementById('variableAmount').value);
+
+            if (!amount || amount <= 0) {
+                alert('Bitte geben Sie einen gültigen Betrag ein');
+                return;
+            }
+
+            const categoryLabels = {
+                'food': '🍔 Lebensmittel',
+                'utilities': '⚡ Nebenkosten',
+                'health': '💊 Gesundheit',
+                'clothing': '👕 Kleidung',
+                'other': '📌 Sonstiges'
+            };
+
+            const expense = {
+                id: Date.now(),
+                category: category,
+                label: categoryLabels[category],
+                amount: amount
+            };
+
+            variableExpenses.push(expense);
+            saveExpenses();
+            renderExpenses();
+            
+            document.getElementById('variableAmount').value = '';
+        }
+
+        function deleteFixedExpense(id) {
+            fixedExpenses = fixedExpenses.filter(e => e.id !== id);
+            saveExpenses();
+            renderExpenses();
+        }
+
+        function deleteVariableExpense(id) {
+            variableExpenses = variableExpenses.filter(e => e.id !== id);
+            saveExpenses();
+            renderExpenses();
+        }
+
+        function saveExpenses() {
+            localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+            localStorage.setItem('variableExpenses', JSON.stringify(variableExpenses));
+        }
+
+        function clearAllExpenses() {
+            if (confirm('Möchten Sie wirklich alle Ausgaben löschen?')) {
+                fixedExpenses = [];
+                variableExpenses = [];
+                saveExpenses();
+                renderExpenses();
+            }
+        }
+
+        // ===== UMRECHNUNGSFUNKTIONEN =====
+        function convertToMonthly(amount, frequency) {
+            switch (frequency) {
+                case 'weekly': return amount * 4.33;
+                case 'monthly': return amount;
+                case 'yearly': return amount / 12;
+                default: return amount;
+            }
+        }
+
+        // ===== RENDERING =====
+        function renderExpenses() {
+            // Fixed Expenses
+            const fixedList = document.getElementById('fixedExpensesList');
+            if (fixedExpenses.length === 0) {
+                fixedList.innerHTML = '<div class="empty-state">Keine Festkosten hinzugefügt</div>';
+            } else {
+                fixedList.innerHTML = fixedExpenses.map(exp => {
+                    const monthlyAmount = convertToMonthly(exp.amount, exp.frequency);
+                    return `
+                        <div class="expense-item fixed">
+                            <div class="expense-info">
+                                <div class="expense-name">${exp.label}</div>
+                                <div class="expense-category">${exp.amount}€ / ${exp.frequency === 'monthly' ? 'Monat' : exp.frequency === 'yearly' ? 'Jahr' : 'Woche'}</div>
+                            </div>
+                            <div class="expense-amount">€${monthlyAmount.toFixed(2)}</div>
+                            <button class="btn-delete" onclick="deleteFixedExpense(${exp.id})">✕</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Variable Expenses
+            const variableList = document.getElementById('variableExpensesList');
+            if (variableExpenses.length === 0) {
+                variableList.innerHTML = '<div class="empty-state">Keine variablen Kosten hinzugefügt</div>';
+            } else {
+                variableList.innerHTML = variableExpenses.map(exp => `
+                    <div class="expense-item variable">
+                        <div class="expense-info">
+                            <div class="expense-name">${exp.label}</div>
+                            <div class="expense-category">Monatlicher Durchschnitt</div>
+                        </div>
+                        <div class="expense-amount">€${exp.amount.toFixed(2)}</div>
+                        <button class="btn-delete" onclick="deleteVariableExpense(${exp.id})">✕</button>
+                    </div>
+                `).join('');
+            }
+
+            // Calculate Totals
+            let fixedTotal = 0;
+            fixedExpenses.forEach(exp => {
+                fixedTotal += convertToMonthly(exp.amount, exp.frequency);
+            });
+
+            let variableTotal = 0;
+            variableExpenses.forEach(exp => {
+                variableTotal += exp.amount;
+            });
+
+            const mandatoryTotal = fixedTotal + variableTotal;
+
+            // Update Display
+            document.getElementById('fixedTotal').textContent = '€' + fixedTotal.toFixed(2);
+            document.getElementById('variableTotal').textContent = '€' + variableTotal.toFixed(2);
+            document.getElementById('mandatoryTotal').textContent = '€' + mandatoryTotal.toFixed(2);
+
+            // Update Income Calculator
+            document.getElementById('mandatoryExpenses').value = mandatoryTotal.toFixed(2);
+            updateIncomeCalculation();
+        }
+
+        // ===== EINKOMMENSRECHNER =====
+        function updateIncomeCalculation() {
+            const emergencyRate = parseFloat(document.getElementById('emergencyRate').value) / 100;
+            const investmentRate = parseFloat(document.getElementById('investmentRate').value) / 100;
+            const buffer = parseFloat(document.getElementById('bufferAmount').value) || 0;
+            const mandatory = parseFloat(document.getElementById('mandatoryExpenses').value) || 0;
+
+            // Update Slider Display
+            document.getElementById('emergencyRateValue').textContent = (emergencyRate * 100).toFixed(0) + '%';
+            document.getElementById('investmentRateValue').textContent = (investmentRate * 100).toFixed(0) + '%';
+
+            // Validate rates
+            if (emergencyRate + investmentRate >= 0.8) {
+                document.getElementById('requiredIncome').textContent = 'Rate zu hoch!';
+                document.getElementById('requiredIncome').parentElement.style.background = '#fee2e2';
+                return;
+            }
+
+            document.getElementById('requiredIncome').parentElement.style.background = '';
+
+            // Formula: Income = (Mandatory + Buffer) / (1 - Emergency - Investment)
+            const usableRate = 1 - emergencyRate - investmentRate;
+            const requiredIncome = (mandatory + buffer) / usableRate;
+
+            // Calculate breakdown
+            const emergencyAmount = requiredIncome * emergencyRate;
+            const investmentAmount = requiredIncome * investmentRate;
+            const remaining = requiredIncome - mandatory - emergencyAmount - investmentAmount;
+
+            // Update Display
+            document.getElementById('requiredIncome').textContent = '€' + requiredIncome.toFixed(2);
+            document.getElementById('incMandatory').textContent = '€' + mandatory.toFixed(0);
+            document.getElementById('incEmergency').textContent = '€' + emergencyAmount.toFixed(0);
+            document.getElementById('incInvestment').textContent = '€' + investmentAmount.toFixed(0);
+            document.getElementById('incRemaining').textContent = '€' + remaining.toFixed(0);
+        }
+
+        // ===== INVESTITIONSPROGNOSE =====
+        let forecastChart = null;
+
+        function calculateForecast() {
+            const currentAmount = parseFloat(document.getElementById('currentAmount').value) || 0;
+            const monthlySavings = parseFloat(document.getElementById('monthlySavings').value) || 0;
+            const annualReturn = parseFloat(document.getElementById('annualReturn').value) || 0;
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value) || 100000;
+
+            if (monthlySavings <= 0 && currentAmount >= targetAmount) {
+                alert('Ziel bereits erreicht!');
+                return;
+            }
+
+            const monthlyRate = annualReturn / 100 / 12;
+            let balance = currentAmount;
+            let months = 0;
+            let totalContributions = currentAmount;
+            const history = [{ month: 0, balance: currentAmount }];
+
+            while (balance < targetAmount && months < 600) { // Max 50 years
+                balance = balance * (1 + monthlyRate) + monthlySavings;
+                totalContributions += monthlySavings;
+                months++;
+                
+                if (months % 12 === 0 || balance >= targetAmount) {
+                    history.push({ month: months, balance: balance });
+                }
+            }
+
+            const interestEarned = balance - totalContributions;
+            const years = months / 12;
+
+            // Update UI
+            document.getElementById('forecastResults').style.display = 'block';
+            document.getElementById('monthsToTarget').textContent = months + ' Monate';
+            document.getElementById('forecastYears').textContent = years.toFixed(1) + ' Jahre';
+            document.getElementById('totalContributions').textContent = '€' + totalContributions.toFixed(0);
+            document.getElementById('interestEarned').textContent = '€' + interestEarned.toFixed(0);
+
+            // Target Date
+            const targetDate = new Date();
+            targetDate.setMonth(targetDate.getMonth() + months);
+            document.getElementById('targetDate').textContent = 'Zieldatum: ' + targetDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+
+            // Chart
+            renderChart(history, targetAmount);
+        }
+
+        function renderChart(history, target) {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            if (forecastChart) {
+                forecastChart.destroy();
+            }
+
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: history.map(h => 'Jahr ' + (h.month / 12).toFixed(1)),
+                    datasets: [{
+                        label: 'Vermögen',
+                        data: history.map(h => h.balance),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Ziel',
+                        data: history.map(() => target),
+                        borderColor: '#10b981',
+                        borderDash: [5, 5],
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => '€' + value.toLocaleString('de-DE')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== EVENT LISTENERS =====
+        document.getElementById('bufferAmount').addEventListener('input', updateIncomeCalculation);
+        
+        // Initialize
+        renderExpenses();
+    </script>
+</body>
+</html>
+
